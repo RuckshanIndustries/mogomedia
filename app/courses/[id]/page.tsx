@@ -13,12 +13,6 @@ import { db } from "@/lib/firebase"
 import { BookOpen, Clock, FileText, Users } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 
-export async function generateStaticParams() {
-  // You can hardcode or fetch from somewhere
-  const courseIds = ["1", "2", "3", "4", "5"]
-
-  return courseIds.map((id) => ({ id }))
-}
 
 // Mock course data - in a real app, this would come from Firestore
 const coursesData = {
