@@ -1,109 +1,60 @@
-import { Navbar } from "@/components/navbar"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import Link from "next/link"
-
 import { collection, getDocs } from "firebase/firestore"
 import { db } from "@/lib/firebase"
+import { Navbar } from "@/components/navbar"
+import Link from "next/link"
 
-// ... other imports and code ...
-
-export async function generateStaticParams() {
-  const coursesRef = collection(db, "courses")
-  const snapshot = await getDocs(coursesRef)
-  const courseIds = snapshot.docs.map((doc) => doc.id)
-  return courseIds.map((id) => ({ id }))
+// Types
+interface Course {
+  id: string
+  title: string
+  category: string
+  description: string
+  instructor: string
+  duration: string
+  students: number
+  level: string
+  prerequisites: string
 }
 
+// Fetch courses from Firestore
+async function getCourses(): Promise<Course[]> {
+  try {
+    const coursesRef = collection(db, "courses")
+    const snapshot = await getDocs(coursesRef)
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Course[]
+  } catch (error) {
+    console.error("Error fetching courses:", error)
+    return [] // Return empty array to avoid build failure
+  }
+}
 
+export default async function CoursesPage() {
+  const courses = await getCourses()
 
-
-// Mock course data
-const courses = [
-  {
-    id: "1",
-    title: "Introduction to Web Development",
-    category: "Web Development",
-    description: "Learn the fundamentals of HTML, CSS, and JavaScript to build your first website.",
-    lessons: 12,
-    duration: "6 weeks",
-  },
-  {
-    id: "2",
-    title: "Advanced React Techniques",
-    category: "Frontend Development",
-    description: "Master React hooks, context API, and state management for complex applications.",
-    lessons: 15,
-    duration: "8 weeks",
-  },
-  {
-    id: "3",
-    title: "UI/UX Design Principles",
-    category: "Design",
-    description: "Learn the fundamentals of user interface and user experience design for digital products.",
-    lessons: 10,
-    duration: "5 weeks",
-  },
-  {
-    id: "4",
-    title: "Mobile App Development with React Native",
-    category: "Mobile Development",
-    description: "Build cross-platform mobile applications using React Native and JavaScript.",
-    lessons: 14,
-    duration: "7 weeks",
-  },
-  {
-    id: "5",
-    title: "Backend Development with Node.js",
-    category: "Backend Development",
-    description: "Create scalable server-side applications with Node.js, Express, and MongoDB.",
-    lessons: 16,
-    duration: "8 weeks",
-  },
-]
-
-export default function CoursesPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
       <main className="flex-1 container py-12">
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">Available Courses</h1>
-            <p className="text-muted-foreground">
-              Browse our selection of courses designed to help you advance your skills and career.
-            </p>
-          </div>
-
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <h1 className="text-3xl font-bold tracking-tight mb-8">Available Courses</h1>
+        {courses.length === 0 ? (
+          <p className="text-muted-foreground">No courses available.</p>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {courses.map((course) => (
-              <Card key={course.id} className="flex flex-col">
-                <CardHeader>
-                  <CardTitle>{course.title}</CardTitle>
-                  <CardDescription>{course.category}</CardDescription>
-                </CardHeader>
-                <CardContent className="flex-1">
-                  <p className="text-muted-foreground">{course.description}</p>
-                  <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-                    <div className="flex items-center">
-                      <span className="font-medium">Lessons:</span>
-                      <span className="ml-1">{course.lessons}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <span className="font-medium">Duration:</span>
-                      <span className="ml-1">{course.duration}</span>
-                    </div>
+              <Link key={course.id} href={`/courses/${course.id}`}>
+                <div className="border rounded-lg p-6 hover:shadow-md transition-shadow">
+                  <h2 className="text-xl font-semibold">{course.title}</h2>
+                  <p className="text-muted-foreground mt-2">{course.category}</p>
+                  <p className="text-sm mt-2">{course.description}</p>
+                  <div className="mt-4 flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">{course.instructor}</span>
+                    <span className="text-sm text-muted-foreground">{course.students} students</span>
                   </div>
-                </CardContent>
-                <CardFooter>
-                  <Button variant="outline" className="w-full" asChild>
-                    <Link href={`/courses/${course.id}`}>View Details</Link>
-                  </Button>
-                </CardFooter>
-              </Card>
+                </div>
+              </Link>
             ))}
           </div>
-        </div>
+        )}
       </main>
     </div>
   )
