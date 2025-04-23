@@ -4,12 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import Link from "next/link"
 
 
-export async function generateStaticParams() {
-  // You can hardcode or fetch from somewhere
-  const courseIds = ["1", "2", "3", "4", "5"]
 
-  return courseIds.map((id) => ({ id }))
-}
 
 
 // Mock course data
