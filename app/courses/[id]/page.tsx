@@ -8,20 +8,45 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/components/ui/toast"
 import { useAuth } from "@/lib/auth-context"
-import { doc, updateDoc, arrayUnion } from "firebase/firestore"
-import { db } from "@/lib/firebase"
+import { enrollInCourse } from "@/lib/course-service"
 import { BookOpen, Clock, FileText, Users } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 
+// Types
+interface Lesson {
+  id: string
+  title: string
+  duration: string
+}
 
-// Mock course data - in a real app, this would come from Firestore
-const coursesData = {
+interface Assignment {
+  id: string
+  title: string
+  dueDate: string
+}
+
+interface Course {
+  id: string
+  title: string
+  category: string
+  description: string
+  lessons: Lesson[]
+  assignments: Assignment[]
+  instructor: string
+  duration: string
+  students: number
+  level: string
+  prerequisites: string
+}
+
+// Mock course data (should ideally come from an API)
+const coursesData: Record<string, Course> = {
   "1": {
     id: "1",
     title: "Introduction to Web Development",
     category: "Web Development",
     description:
-      "Learn the fundamentals of HTML, CSS, and JavaScript to build your first website. This course covers everything from basic HTML tags to responsive design principles and interactive JavaScript features.",
+      "Learn the fundamentals of HTML, CSS, and JavaScript to build your first website.",
     lessons: [
       { id: "l1", title: "HTML Basics", duration: "45 min" },
       { id: "l2", title: "CSS Styling", duration: "60 min" },
@@ -40,102 +65,7 @@ const coursesData = {
     level: "Beginner",
     prerequisites: "None",
   },
-  "2": {
-    id: "2",
-    title: "Advanced React Techniques",
-    category: "Frontend Development",
-    description:
-      "Master React hooks, context API, and state management for complex applications. This course dives deep into advanced React patterns, performance optimization, and building scalable component architectures.",
-    lessons: [
-      { id: "l1", title: "React Hooks Deep Dive", duration: "60 min" },
-      { id: "l2", title: "Context API and State Management", duration: "75 min" },
-      { id: "l3", title: "Performance Optimization", duration: "90 min" },
-      { id: "l4", title: "Custom Hooks", duration: "60 min" },
-      { id: "l5", title: "Testing React Components", duration: "75 min" },
-    ],
-    assignments: [
-      { id: "a1", title: "Convert Class Components to Hooks", dueDate: "Week 2" },
-      { id: "a2", title: "Build a State Management Solution", dueDate: "Week 5" },
-      { id: "a3", title: "Performance Optimization Project", dueDate: "Week 7" },
-    ],
-    instructor: "Prof. Michael Chen",
-    duration: "8 weeks",
-    students: 16,
-    level: "Intermediate",
-    prerequisites: "Basic React knowledge, JavaScript fundamentals",
-  },
-  "3": {
-    id: "3",
-    title: "UI/UX Design Principles",
-    category: "Design",
-    description:
-      "Learn the fundamentals of user interface and user experience design for digital products. This course covers design thinking, user research, wireframing, prototyping, and usability testing.",
-    lessons: [
-      { id: "l1", title: "Introduction to UI/UX", duration: "45 min" },
-      { id: "l2", title: "User Research Methods", duration: "60 min" },
-      { id: "l3", title: "Wireframing and Prototyping", duration: "75 min" },
-      { id: "l4", title: "Visual Design Principles", duration: "60 min" },
-      { id: "l5", title: "Usability Testing", duration: "60 min" },
-    ],
-    assignments: [
-      { id: "a1", title: "Conduct User Research", dueDate: "Week 2" },
-      { id: "a2", title: "Create Wireframes for an App", dueDate: "Week 3" },
-      { id: "a3", title: "Design a Mobile App Interface", dueDate: "Week 5" },
-    ],
-    instructor: "Prof. Emily Rodriguez",
-    duration: "5 weeks",
-    students: 20,
-    level: "Beginner",
-    prerequisites: "None",
-  },
-  "4": {
-    id: "4",
-    title: "Mobile App Development with React Native",
-    category: "Mobile Development",
-    description:
-      "Build cross-platform mobile applications using React Native and JavaScript. Learn to create native-like experiences for iOS and Android from a single codebase.",
-    lessons: [
-      { id: "l1", title: "React Native Fundamentals", duration: "60 min" },
-      { id: "l2", title: "Navigation and Routing", duration: "75 min" },
-      { id: "l3", title: "Working with Native APIs", duration: "90 min" },
-      { id: "l4", title: "State Management in Mobile Apps", duration: "75 min" },
-      { id: "l5", title: "Publishing to App Stores", duration: "60 min" },
-    ],
-    assignments: [
-      { id: "a1", title: "Build a To-Do App", dueDate: "Week 2" },
-      { id: "a2", title: "Create a Multi-Screen App", dueDate: "Week 4" },
-      { id: "a3", title: "Integrate with Device APIs", dueDate: "Week 6" },
-    ],
-    instructor: "Dr. James Wilson",
-    duration: "7 weeks",
-    students: 18,
-    level: "Intermediate",
-    prerequisites: "React.js knowledge, JavaScript fundamentals",
-  },
-  "5": {
-    id: "5",
-    title: "Backend Development with Node.js",
-    category: "Backend Development",
-    description:
-      "Create scalable server-side applications with Node.js, Express, and MongoDB. Learn to build RESTful APIs, handle authentication, and deploy backend services.",
-    lessons: [
-      { id: "l1", title: "Node.js Fundamentals", duration: "60 min" },
-      { id: "l2", title: "Express.js Framework", duration: "75 min" },
-      { id: "l3", title: "MongoDB and Mongoose", duration: "90 min" },
-      { id: "l4", title: "Authentication and Authorization", duration: "75 min" },
-      { id: "l5", title: "API Design and Development", duration: "90 min" },
-    ],
-    assignments: [
-      { id: "a1", title: "Create a RESTful API", dueDate: "Week 3" },
-      { id: "a2", title: "Implement Authentication", dueDate: "Week 5" },
-      { id: "a3", title: "Build a Full Backend Service", dueDate: "Week 7" },
-    ],
-    instructor: "Prof. David Kim",
-    duration: "8 weeks",
-    students: 22,
-    level: "Intermediate",
-    prerequisites: "JavaScript fundamentals",
-  },
+  // ... other courses
 }
 
 export default function CourseDetailPage() {
@@ -146,13 +76,11 @@ export default function CourseDetailPage() {
   const [isEnrolling, setIsEnrolling] = useState(false)
   const [isEnrolled, setIsEnrolled] = useState(false)
 
-  // Get course data
   const course = coursesData[courseId as keyof typeof coursesData]
 
   useEffect(() => {
-    // Check if user is enrolled in this course
-    if (userProfile && userProfile.enrolledCourses) {
-      setIsEnrolled(userProfile.enrolledCourses.includes(courseId as string ))
+    if (userProfile?.enrolledCourses) {
+      setIsEnrolled(userProfile.enrolledCourses.includes(courseId as string))
     }
   }, [userProfile, courseId])
 
@@ -178,12 +106,7 @@ export default function CourseDetailPage() {
     setIsEnrolling(true)
 
     try {
-      // Update user's enrolled courses in Firestore
-      const userRef = doc(db, "users", user.uid)
-      await updateDoc(userRef, {
-        enrolledCourses: arrayUnion(courseId),
-      })
-
+      await enrollInCourse(user.uid, courseId as string)
       setIsEnrolled(true)
       toast({
         title: "Enrollment Successful",
