@@ -3,6 +3,17 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
 
+import { collection, getDocs } from "firebase/firestore"
+import { db } from "@/lib/firebase"
+
+// ... other imports and code ...
+
+export async function generateStaticParams() {
+  const coursesRef = collection(db, "courses")
+  const snapshot = await getDocs(coursesRef)
+  const courseIds = snapshot.docs.map((doc) => doc.id)
+  return courseIds.map((id) => ({ id }))
+}
 
 
 

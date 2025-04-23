@@ -39,7 +39,7 @@ interface Course {
   prerequisites: string
 }
 
-// Mock course data (should ideally come from an API)
+// Mock course data (replace with Firestore/API fetch in production)
 const coursesData: Record<string, Course> = {
   "1": {
     id: "1",
@@ -65,7 +65,38 @@ const coursesData: Record<string, Course> = {
     level: "Beginner",
     prerequisites: "None",
   },
-  // ... other courses
+  "2": {
+    id: "2",
+    title: "Advanced React Techniques",
+    category: "Frontend Development",
+    description:
+      "Master React hooks, context API, and state management for complex applications.",
+    lessons: [
+      { id: "l1", title: "React Hooks Deep Dive", duration: "60 min" },
+      { id: "l2", title: "Context API and State Management", duration: "75 min" },
+      { id: "l3", title: "Performance Optimization", duration: "90 min" },
+      { id: "l4", title: "Custom Hooks", duration: "60 min" },
+      { id: "l5", title: "Testing React Components", duration: "75 min" },
+    ],
+    assignments: [
+      { id: "a1", title: "Convert Class Components to Hooks", dueDate: "Week 2" },
+      { id: "a2", title: "Build a State Management Solution", dueDate: "Week 5" },
+      { id: "a3", title: "Performance Optimization Project", dueDate: "Week 7" },
+    ],
+    instructor: "Prof. Michael Chen",
+    duration: "8 weeks",
+    students: 16,
+    level: "Intermediate",
+    prerequisites: "Basic React knowledge, JavaScript fundamentals",
+  },
+  // Add other courses as needed
+}
+
+// Generate static parameters for dynamic routes
+export async function generateStaticParams() {
+  // In a real app, fetch course IDs from Firestore or an API
+  const courseIds = Object.keys(coursesData)
+  return courseIds.map((id) => ({ id }))
 }
 
 export default function CourseDetailPage() {
