@@ -151,7 +151,7 @@ export default function CourseDetailPage() {
   useEffect(() => {
     // Check if user is enrolled in this course
     if (userProfile && userProfile.enrolledCourses) {
-      setIsEnrolled(userProfile.enrolledCourses.includes(courseId))
+      setIsEnrolled(userProfile.enrolledCourses.includes(courseId as string ))
     }
   }, [userProfile, courseId])
 
